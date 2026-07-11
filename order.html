@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Cake Cart - Order Enquiry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream:#FBF7F2;
+      --warm-white:#FEFCFA;
+      --chocolate:#3D2B1F;
+      --rose:#C47A6E;
+      --rose-dark:#9E554B;
+      --sage:#8BA888;
+      --sage-light:#E8F1E7;
+      --amber-light:#FFF3DC;
+      --text-primary:#3D2B1F;
+      --text-secondary:#6F5D52;
+      --text-muted:#9B8B82;
+      --border:#E8DDD4;
+      --border-strong:#D8C7BA;
+      --radius:14px;
+      --radius-sm:10px;
+    }
+
+    * { box-sizing:border-box; }
+    body {
+      margin:0;
+      background:var(--cream);
+      color:var(--text-primary);
+      font-family:"DM Sans",sans-serif;
+      line-height:1.45;
+    }
+
+    .page {
+      min-height:100vh;
+      max-width:520px;
+      margin:0 auto;
+      background:var(--warm-white);
+      box-shadow:0 10px 40px rgba(61,43,31,0.08);
+    }
+
+    .hero {
+      padding:30px 22px 22px;
+      background:linear-gradient(180deg,#FFF9F4 0%,#FEFCFA 100%);
+      border-bottom:1px solid var(--border);
+    }
+
+    .brand {
+      font-family:"Playfair Display",serif;
+      font-size:31px;
+      font-weight:700;
+      color:var(--chocolate);
+      margin:0 0 5px;
+      letter-spacing:0;
+    }
+
+    .tagline {
+      font-size:14px;
+      color:var(--text-secondary);
+      margin:0 0 18px;
+    }
+
+    .notice {
+      background:var(--amber-light);
+      border:1px solid rgba(212,148,58,0.35);
+      border-radius:var(--radius-sm);
+      padding:12px 13px;
+      font-size:13px;
+      color:#7A5516;
+    }
+
+    form { padding:20px 22px 34px; }
+    .section-title {
+      font-family:"Playfair Display",serif;
+      font-size:20px;
+      font-weight:600;
+      color:var(--chocolate);
+      margin:18px 0 12px;
+    }
+
+    .form-group { margin-bottom:14px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    label {
+      display:block;
+      font-size:11px;
+      font-weight:700;
+      color:var(--text-secondary);
+      text-transform:uppercase;
+      letter-spacing:0.4px;
+      margin-bottom:6px;
+    }
+
+    input, select, textarea {
+      width:100%;
+      background:#fff;
+      border:1px solid var(--border-strong);
+      border-radius:var(--radius-sm);
+      padding:12px 13px;
+      font-family:"DM Sans",sans-serif;
+      font-size:15px;
+      color:var(--text-primary);
+      outline:none;
+    }
+
+    textarea { min-height:92px; resize:vertical; }
+    input:focus, select:focus, textarea:focus {
+      border-color:var(--rose);
+      box-shadow:0 0 0 3px rgba(196,122,110,0.15);
+    }
+
+    .price-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .price-card {
+      background:var(--cream);
+      border:1px solid var(--border);
+      border-radius:var(--radius-sm);
+      padding:10px;
+    }
+
+    .price-card strong {
+      display:block;
+      font-size:13px;
+      color:var(--chocolate);
+      margin-bottom:2px;
+    }
+
+    .price-card span {
+      font-size:12px;
+      color:var(--text-secondary);
+    }
+
+    .file-row {
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .ghost-btn {
+      border:1px solid var(--border-strong);
+      background:#fff;
+      color:var(--chocolate);
+      border-radius:var(--radius-sm);
+      padding:10px 12px;
+      font-family:"DM Sans",sans-serif;
+      font-size:13px;
+      font-weight:700;
+      cursor:pointer;
+    }
+
+    .preview {
+      display:none;
+      margin-top:9px;
+      background:var(--cream);
+      border:1px solid var(--border);
+      border-radius:var(--radius-sm);
+      padding:8px;
+    }
+
+    .preview img {
+      display:block;
+      width:100%;
+      max-height:190px;
+      object-fit:contain;
+      border-radius:8px;
+      background:#fff;
+    }
+
+    .submit-btn {
+      width:100%;
+      margin-top:12px;
+      border:0;
+      border-radius:var(--radius-sm);
+      background:var(--rose);
+      color:#fff;
+      padding:14px 16px;
+      font-size:15px;
+      font-weight:700;
+      font-family:"DM Sans",sans-serif;
+      cursor:pointer;
+    }
+
+    .submit-btn:disabled { opacity:0.7; cursor:not-allowed; }
+    .success, .error {
+      display:none;
+      margin-top:14px;
+      border-radius:var(--radius-sm);
+      padding:13px;
+      font-size:14px;
+    }
+
+    .success {
+      background:var(--sage-light);
+      border:1px solid rgba(90,122,87,0.25);
+      color:#42603E;
+    }
+
+    .error {
+      background:#FCECEC;
+      border:1px solid #F4C5C5;
+      color:#B83A3A;
+    }
+
+    .fine-print {
+      font-size:12px;
+      color:var(--text-muted);
+      margin-top:10px;
+    }
+
+    @media (max-width:420px) {
+      .form-row, .price-grid { grid-template-columns:1fr; }
+      .hero, form { padding-left:18px; padding-right:18px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <h1 class="brand">The Cake Cart</h1>
+      <p class="tagline">Custom cakes, bento cakes, dessert cups and sweet treats.</p>
+      <div class="notice">
+        Submit your enquiry here. We will review the design, date and serving size, then confirm availability and final quote by WhatsApp.
+      </div>
+    </section>
+
+    <form id="order-form">
+      <div class="section-title">Your Details</div>
+      <div class="form-group">
+        <label for="name">Name *</label>
+        <input id="name" required placeholder="Your name">
+      </div>
+      <div class="form-group">
+        <label for="phone">WhatsApp / Phone *</label>
+        <input id="phone" required type="tel" placeholder="04xx xxx xxx">
+      </div>
+
+      <div class="section-title">Order Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="date">Event / pickup date *</label>
+          <input id="date" required type="date">
+        </div>
+        <div class="form-group">
+          <label for="time">Preferred time</label>
+          <input id="time" type="time">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="type">Type *</label>
+          <select id="type" required>
+            <option value="">Select...</option>
+            <option>Cake</option>
+            <option>Bento</option>
+            <option>Hamper</option>
+            <option>Dessert Cup</option>
+            <option>Pastry</option>
+            <option>Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="flavour">Flavour *</label>
+          <select id="flavour" required>
+            <option value="">Select...</option>
+            <option>Chocolate Cake</option>
+            <option>Black Forest Cake</option>
+            <option>Chocolate Truffle Cake</option>
+            <option>Oreo Cake</option>
+            <option>KitKat Cake</option>
+            <option>Cookies & Cream</option>
+            <option>Vanilla</option>
+            <option>Red Velvet</option>
+            <option>Biscoff</option>
+            <option>Ferrero Rocher</option>
+            <option>Blueberry</option>
+            <option>Mango</option>
+            <option>Orange Silk & Almond</option>
+            <option>Chocolate Strawberry</option>
+            <option>Chocolate Raspberry</option>
+            <option>Mixed Fruit</option>
+            <option>Pineapple</option>
+            <option>Mixed Berries</option>
+            <option>Rasmalai</option>
+            <option>Gulab Jamun</option>
+            <option>Kaju Katli</option>
+            <option>Rabri</option>
+            <option>Rose & Pistachio</option>
+            <option>Custom</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="servings">Servings / quantity *</label>
+          <input id="servings" required placeholder="e.g. 12 people, 24 cups">
+        </div>
+        <div class="form-group">
+          <label for="delivery">Pickup or delivery</label>
+          <select id="delivery">
+            <option>Pickup</option>
+            <option>Delivery</option>
+            <option>Not sure yet</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="theme">Theme / design notes *</label>
+        <textarea id="theme" required placeholder="Tell us colours, theme, message on cake, occasion, design style, etc."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Reference image</label>
+        <input id="reference-file" type="file" accept="image/*" style="display:none">
+        <input id="reference-image" type="hidden">
+        <div class="file-row">
+          <button type="button" class="ghost-btn" onclick="document.getElementById('reference-file').click()">Add reference image</button>
+          <button type="button" class="ghost-btn" id="remove-image" style="display:none;color:#B83A3A;" onclick="clearReferenceImage()">Remove image</button>
+        </div>
+        <div class="preview" id="image-preview-wrap">
+          <img id="image-preview" alt="Reference preview">
+        </div>
+      </div>
+
+      <div class="section-title">Pricing Guide</div>
+      <div class="price-grid">
+        <div class="price-card"><strong>Bento</strong><span>From $35</span></div>
+        <div class="price-card"><strong>Cake</strong><span>From $80</span></div>
+        <div class="price-card"><strong>Dessert Cups</strong><span>From $5 each</span></div>
+        <div class="price-card"><strong>Custom</strong><span>Quoted after review</span></div>
+      </div>
+      <div class="fine-print">Final pricing depends on size, design detail, flavour, delivery and availability.</div>
+
+      <div class="form-group" id="source-group" style="display:none;margin-top:16px;">
+        <label for="source">How did you hear about us?</label>
+        <select id="source">
+          <option value="">Select...</option>
+          <option>Instagram</option>
+          <option>WhatsApp</option>
+          <option>Facebook</option>
+          <option>Referral</option>
+          <option>Repeat customer</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <button class="submit-btn" id="submit-btn" type="submit">Submit enquiry</button>
+      <div class="success" id="success-msg">Thank you. Your enquiry has been sent. We will contact you on WhatsApp soon.</div>
+      <div class="error" id="error-msg">Something went wrong. Please try again or message us directly on WhatsApp.</div>
+    </form>
+  </main>
+
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUPZFV4jOiL1nLWmFZkx54VrmcZrmFEL5x-P5XAndoN-wM4zdvbVOg_FE_FJtyo3pREQ/exec';
+    const ORDER_KEYS = ['id','name','phone','source','date','time','type','flavour','theme','total','paid','status','delivery','reminder','notes','created','referenceImage'];
+
+    const sourceFromUrl = new URLSearchParams(window.location.search).get('source') || '';
+    if(sourceFromUrl) {
+      document.getElementById('source').innerHTML = `<option>${sourceFromUrl}</option>`;
+    } else {
+      document.getElementById('source-group').style.display = 'block';
+    }
+
+    document.getElementById('reference-file').addEventListener('change', handleReferenceImage);
+    document.getElementById('order-form').addEventListener('submit', submitOrder);
+
+    function uid() {
+      return '_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    function objToRow(obj, keys) {
+      return keys.map(k=>{
+        const value = obj[k] !== undefined ? obj[k] : '';
+        return (k === 'date' || k === 'reminder') && value ? "'" + value : value;
+      });
+    }
+
+    function rowToObj(row, keys) {
+      const obj = {};
+      keys.forEach((k,i)=>obj[k] = row[i] !== undefined ? String(row[i]) : '');
+      return obj;
+    }
+
+    async function sheetGet(sheet) {
+      const response = await fetch(`${SCRIPT_URL}?sheet=${sheet}&_=${Date.now()}`);
+      const rows = await response.json();
+      return rows.slice(1).filter(row=>row[0] && String(row[0]).trim() !== '');
+    }
+
+    async function sheetSet(sheet, headers, data) {
+      await fetch(SCRIPT_URL, {
+        method:'POST',
+        headers:{'Content-Type':'text/plain'},
+        body: JSON.stringify({sheet, data:[headers, ...data]})
+      });
+    }
+
+    function setReferenceImage(dataUrl) {
+      document.getElementById('reference-image').value = dataUrl || '';
+      document.getElementById('image-preview').src = dataUrl || '';
+      document.getElementById('image-preview-wrap').style.display = dataUrl ? 'block' : 'none';
+      document.getElementById('remove-image').style.display = dataUrl ? 'inline-block' : 'none';
+      document.getElementById('reference-file').value = '';
+    }
+
+    function clearReferenceImage() {
+      setReferenceImage('');
+    }
+
+    function compressReferenceImage(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('Could not read image'));
+        reader.onload = () => {
+          const img = new Image();
+          img.onerror = () => reject(new Error('Could not load image'));
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxSide = 640;
+            const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+            canvas.width = Math.max(1, Math.round(img.width * scale));
+            canvas.height = Math.max(1, Math.round(img.height * scale));
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            let quality = 0.72;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            while(dataUrl.length > 45000 && quality > 0.35) {
+              quality -= 0.08;
+              dataUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            resolve(dataUrl);
+          };
+          img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function handleReferenceImage(event) {
+      const file = event.target.files && event.target.files[0];
+      if(!file) return;
+      if(!file.type.startsWith('image/')) return;
+      try {
+        const dataUrl = await compressReferenceImage(file);
+        if(dataUrl.length > 50000) {
+          alert('Image is too large. Please try a smaller screenshot or photo.');
+          return;
+        }
+        setReferenceImage(dataUrl);
+      } catch(e) {
+        alert('Could not attach image. Please try another image.');
+      }
+    }
+
+    async function submitOrder(event) {
+      event.preventDefault();
+      const button = document.getElementById('submit-btn');
+      const success = document.getElementById('success-msg');
+      const error = document.getElementById('error-msg');
+      success.style.display = 'none';
+      error.style.display = 'none';
+      button.disabled = true;
+      button.textContent = 'Submitting...';
+
+      const source = sourceFromUrl || document.getElementById('source').value || 'Website enquiry';
+      const servings = document.getElementById('servings').value.trim();
+      const theme = document.getElementById('theme').value.trim();
+      const notes = [
+        servings ? `Servings / quantity: ${servings}` : '',
+        `Submitted from public enquiry form`,
+        `Source link: ${source}`
+      ].filter(Boolean).join('\n');
+
+      const order = {
+        id: uid(),
+        name: document.getElementById('name').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        source,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        type: document.getElementById('type').value,
+        flavour: document.getElementById('flavour').value,
+        theme,
+        total: 0,
+        paid: 0,
+        status: 'Enquiry',
+        delivery: document.getElementById('delivery').value,
+        reminder: '',
+        notes,
+        created: Date.now(),
+        referenceImage: document.getElementById('reference-image').value
+      };
+
+      try {
+        const existingRows = await sheetGet('Orders');
+        const existingOrders = existingRows.map(row=>rowToObj(row, ORDER_KEYS));
+        existingOrders.unshift(order);
+        await sheetSet('Orders', ORDER_KEYS, existingOrders.map(o=>objToRow(o, ORDER_KEYS)));
+        success.style.display = 'block';
+        document.getElementById('order-form').reset();
+        setReferenceImage('');
+      } catch(e) {
+        console.error(e);
+        error.style.display = 'block';
+      } finally {
+        button.disabled = false;
+        button.textContent = 'Submit enquiry';
+      }
+    }
+  </script>
+</body>
+</html>
