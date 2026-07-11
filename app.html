@@ -331,7 +331,20 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
       <div class="form-group"><label class="form-label">Type *</label><select class="form-select" id="f-type"><option value="">Select…</option><option>Cake</option><option>Bento</option><option>Hamper</option><option>Dessert Cup</option><option>Pastry</option><option>Custom</option></select></div>
       <div class="form-group"><label class="form-label">Flavour</label><select class="form-select" id="f-flavour"><option value="">Select…</option><option>Chocolate Cake</option><option>Black Forest Cake</option><option>Chocolate Truffle Cake</option><option>Oreo Cake</option><option>KitKat Cake</option><option>Cookies &amp; Cream</option><option>Vanilla</option><option>Red Velvet</option><option>Biscoff</option><option>Ferrero Rocher</option><option>Blueberry</option><option>Mango</option><option>Orange Silk &amp; Almond</option><option>Chocolate Strawberry</option><option>Chocolate Raspberry</option><option>Mixed Fruit</option><option>Pineapple</option><option>Mixed Berries</option><option>Rasmalai</option><option>Gulab Jamun</option><option>Kaju Katli</option><option>Rabri</option><option>Rose &amp; Pistachio</option><option>Custom</option></select></div>
     </div>
-    <div class="form-group"><label class="form-label">Theme / design notes</label><textarea class="form-textarea" id="f-theme" placeholder="e.g. Floral, pastel pink, 'Happy Birthday Mia'"></textarea></div>
+    <div class="form-group">
+      <label class="form-label">Theme / design notes</label>
+      <textarea class="form-textarea" id="f-theme" placeholder="e.g. Floral, pastel pink, 'Happy Birthday Mia'"></textarea>
+      <input type="hidden" id="f-reference-image">
+      <input type="file" id="f-reference-file" accept="image/*" style="display:none;" onchange="handleReferenceImage(event)">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+        <button type="button" class="btn btn-ghost btn-sm" style="flex:1;min-width:150px;border-color:var(--border-strong);" onclick="document.getElementById('f-reference-file').click()">📷 Add reference image</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="ref-remove-btn" style="display:none;color:#B83A3A;border-color:#F5C5C5;" onclick="clearReferenceImage()">Remove image</button>
+      </div>
+      <div id="ref-preview-wrap" style="display:none;margin-top:10px;background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;">
+        <img id="ref-preview" alt="Reference image preview" style="width:100%;max-height:180px;object-fit:contain;border-radius:var(--radius-sm);display:block;background:#fff;cursor:pointer;" onclick="openReferenceImage(document.getElementById('f-reference-image').value)">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">Reference image attached. Tap image to open larger.</div>
+      </div>
+    </div>
     <div class="form-row-2">
       <div class="form-group"><label class="form-label">Total price ($)</label><input type="number" class="form-input" id="f-total" placeholder="0.00" step="0.01" oninput="updateBalance()"></div>
       <div class="form-group"><label class="form-label">Amount paid ($)</label><input type="number" class="form-input" id="f-paid" placeholder="0.00" step="0.01" oninput="updateBalance()"></div>
@@ -786,7 +799,7 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUPZFV4jOiL1nLWmFZkx54VrmcZrmFEL5x-P5XAndoN-wM4zdvbVOg_FE_FJtyo3pREQ/exec';
-const ORDER_KEYS = ['id','name','phone','source','date','time','type','flavour','theme','total','paid','status','delivery','reminder','notes','created'];
+const ORDER_KEYS = ['id','name','phone','source','date','time','type','flavour','theme','total','paid','status','delivery','reminder','notes','created','referenceImage'];
 const EXP_KEYS   = ['id','desc','cat','amount','date','recurring'];
 
 let orders = [], expenses = [], currentFilter = 'all', prevScreen = 'home';
@@ -1154,6 +1167,7 @@ function viewOrder(id){
       <div class="detail-row"><span class="detail-key">Type</span><span class="detail-val">${o.type||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Flavour</span><span class="detail-val">${o.flavour||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Theme</span><span class="detail-val">${o.theme||'—'}</span></div>
+      ${o.referenceImage?`<div style="margin-top:12px;"><div class="detail-key" style="margin-bottom:6px;">Reference image</div><img src="${o.referenceImage}" alt="Reference image" style="width:100%;max-height:260px;object-fit:contain;border-radius:var(--radius-sm);border:1px solid var(--border);background:#fff;cursor:pointer;" onclick="openReferenceImage('${o.referenceImage}')"></div>`:''}
     </div>
     <div class="detail-section" style="margin-top:8px;"><div class="detail-section-title">Payment</div>
       <div class="detail-row"><span class="detail-key">Total</span><span class="detail-val">$${(o.total||0).toLocaleString()}</span></div>
@@ -1225,6 +1239,7 @@ function newOrder(){
   document.getElementById('add-title').textContent='New Order';
   document.getElementById('delete-btn').style.display='none';
   ['f-name','f-phone','f-theme','f-notes'].forEach(id=>document.getElementById(id).value='');
+  setReferenceImage('');
   ['f-source','f-type','f-flavour'].forEach(id=>document.getElementById(id).selectedIndex=0);
   document.getElementById('f-delivery').value='Pickup';
   document.getElementById('f-status').value='Enquiry';
@@ -1253,6 +1268,7 @@ function editOrder(id){
   document.getElementById('f-type').value=o.type||'';
   document.getElementById('f-flavour').value=o.flavour||'';
   document.getElementById('f-theme').value=o.theme||'';
+  setReferenceImage(o.referenceImage||'');
   document.getElementById('f-total').value=o.total||'';
   document.getElementById('f-paid').value=o.paid||'';
   document.getElementById('f-status').value=o.status||'Enquiry';
@@ -1287,6 +1303,81 @@ function updateBalance(){
   el.textContent=ps; el.className='badge '+{'Paid':'badge-paid','Unpaid':'badge-unpaid','Partial':'badge-partial'}[ps];
 }
 
+function setReferenceImage(dataUrl) {
+  const value = dataUrl || '';
+  document.getElementById('f-reference-image').value = value;
+  document.getElementById('ref-preview').src = value;
+  document.getElementById('ref-preview-wrap').style.display = value ? 'block' : 'none';
+  document.getElementById('ref-remove-btn').style.display = value ? 'inline-flex' : 'none';
+  const fileInput = document.getElementById('f-reference-file');
+  if(fileInput) fileInput.value = '';
+}
+
+function clearReferenceImage() {
+  setReferenceImage('');
+}
+
+function openReferenceImage(dataUrl) {
+  if(!dataUrl) return;
+  const w = window.open('', '_blank');
+  if(!w) { showToast('Allow popups to view image'); return; }
+  w.document.write(`<title>Reference image</title><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${dataUrl}" style="max-width:100%;max-height:100vh;object-fit:contain;"></body>`);
+  w.document.close();
+}
+
+function compressReferenceImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error('Could not read image'));
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Could not load image'));
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxSide = 640;
+        const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+        canvas.width = Math.max(1, Math.round(img.width * scale));
+        canvas.height = Math.max(1, Math.round(img.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        let quality = 0.72;
+        let dataUrl = canvas.toDataURL('image/jpeg', quality);
+        while(dataUrl.length > 45000 && quality > 0.35) {
+          quality -= 0.08;
+          dataUrl = canvas.toDataURL('image/jpeg', quality);
+        }
+        resolve(dataUrl);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleReferenceImage(event) {
+  const file = event.target.files && event.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith('image/')) {
+    showToast('Please choose an image file');
+    event.target.value = '';
+    return;
+  }
+  try {
+    const dataUrl = await compressReferenceImage(file);
+    if(dataUrl.length > 50000) {
+      showToast('Image is too large. Try a smaller screenshot/photo.');
+      event.target.value = '';
+      return;
+    }
+    setReferenceImage(dataUrl);
+    showToast('Reference image attached');
+  } catch(e) {
+    console.error(e);
+    showToast('Could not attach image');
+  }
+}
+
 async function saveOrder(){
   const name=document.getElementById('f-name').value.trim(), date=document.getElementById('f-date').value, type=document.getElementById('f-type').value;
   if(!name||!date||!type){showToast('Please fill in name, date & type');return;}
@@ -1295,7 +1386,7 @@ async function saveOrder(){
   const data={
     id:id||uid(),name,phone:document.getElementById('f-phone').value,
     source:document.getElementById('f-source').value,date,time:document.getElementById('f-time').value,
-    type,flavour:document.getElementById('f-flavour').value,theme:document.getElementById('f-theme').value,
+    type,flavour:document.getElementById('f-flavour').value,theme:document.getElementById('f-theme').value,referenceImage:document.getElementById('f-reference-image').value,
     total:Number(document.getElementById('f-total').value)||0,paid:Number(document.getElementById('f-paid').value)||0,
     status:document.getElementById('f-status').value,delivery:document.getElementById('f-delivery').value,
     reminder:document.getElementById('f-reminder').value,notes:document.getElementById('f-notes').value,
