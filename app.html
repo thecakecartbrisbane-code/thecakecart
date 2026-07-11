@@ -596,17 +596,17 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
 </div>
 
 
-<!-- INVENTORY SCREEN -->
+<!-- SHOPPING REMINDERS SCREEN -->
 <div class="screen" id="screen-inventory">
   <!-- Summary row -->
   <div class="section-head" style="padding-bottom:8px;">
-    <div class="section-title">Inventory</div>
-    <button onclick="showInvForm()" style="background:var(--chocolate);color:var(--warm-white);border:none;border-radius:var(--radius-sm);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add Item</button>
+    <div><div class="section-title">Shopping Reminders</div><div class="section-sub">Simple checklist for things to buy</div></div>
+    <button onclick="showInvForm()" style="background:var(--chocolate);color:var(--warm-white);border:none;border-radius:var(--radius-sm);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add</button>
   </div>
   <div class="inv-summary">
-    <div class="inv-summary-card"><div class="inv-summary-val" id="inv-total">0</div><div class="inv-summary-label">Total items</div></div>
-    <div class="inv-summary-card" style="background:#FEF0E8;border-color:rgba(192,83,10,0.2);"><div class="inv-summary-val" id="inv-low" style="color:#C0530A;">0</div><div class="inv-summary-label">Low stock</div></div>
-    <div class="inv-summary-card" style="background:var(--sage-light);border-color:rgba(90,122,87,0.2);"><div class="inv-summary-val" id="inv-ok" style="color:var(--sage-dark);">0</div><div class="inv-summary-label">OK</div></div>
+    <div class="inv-summary-card"><div class="inv-summary-val" id="inv-total">0</div><div class="inv-summary-label">Total</div></div>
+    <div class="inv-summary-card" style="background:#FEF0E8;border-color:rgba(192,83,10,0.2);"><div class="inv-summary-val" id="inv-low" style="color:#C0530A;">0</div><div class="inv-summary-label">To buy</div></div>
+    <div class="inv-summary-card" style="background:var(--sage-light);border-color:rgba(90,122,87,0.2);"><div class="inv-summary-val" id="inv-ok" style="color:var(--sage-dark);">0</div><div class="inv-summary-label">Done</div></div>
   </div>
 
   <!-- Shopping list button -->
@@ -621,24 +621,26 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
   <div class="inv-filter-row">
     <div class="inv-chip active" onclick="setInvFilter(this,'All')">All</div>
     <div class="inv-chip" onclick="setInvFilter(this,'Low Stock')">⚠️ Low Stock</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Raw Material')">Raw Material</div>
+    <div class="inv-chip" onclick="setInvFilter(this,'To Buy')">To buy</div>
+    <div class="inv-chip" onclick="setInvFilter(this,'Done')">Done</div>
+    <div class="inv-chip" onclick="setInvFilter(this,'Ingredients')">Ingredients</div>
     <div class="inv-chip" onclick="setInvFilter(this,'Fresh')">Fresh</div>
     <div class="inv-chip" onclick="setInvFilter(this,'Packaging')">Packaging</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Decoration')">Decoration</div>
+    <div class="inv-chip" onclick="setInvFilter(this,'Decorations')">Decorations</div>
   </div>
 
   <div style="padding:0 20px;" id="inv-list"></div>
   <div style="height:20px;"></div>
 </div>
 
-<!-- INVENTORY ADD/EDIT MODAL -->
+<!-- SHOPPING REMINDER ADD/EDIT MODAL -->
 <div id="inv-modal" style="display:none;position:fixed;inset:0;background:rgba(61,43,31,0.55);z-index:700;align-items:flex-end;justify-content:center;">
   <div style="background:var(--warm-white);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:430px;max-height:90vh;overflow-y:auto;">
     <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--chocolate);margin-bottom:16px;" id="inv-modal-title">Add Item</div>
 
     <!-- Quick select from predefined -->
     <div class="form-group">
-      <label class="form-label">Quick select (or type below)</label>
+      <label class="form-label">Quick pick</label>
       <select class="form-select" id="inv-quick-select" onchange="invQuickFill()">
         <option value="">— choose a common item —</option>
         <optgroup label="Raw Material">
@@ -677,7 +679,7 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
 
     <input type="hidden" id="inv-edit-id">
     <div class="form-group">
-      <label class="form-label">Item name *</label>
+      <label class="form-label">What to buy *</label>
       <input type="text" class="form-input" id="inv-name" placeholder="e.g. Butter">
     </div>
     <div class="form-row-2">
@@ -794,7 +796,7 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
   <div class="nav-tab" onclick="switchScreen('finance',this)" style="min-width:60px;"><div class="nav-icon">💰</div><div class="nav-label">Finance</div></div>
   <div class="nav-tab" onclick="switchScreen('analytics',this)" style="min-width:60px;"><div class="nav-icon">📊</div><div class="nav-label">Insights</div></div>
   <div class="nav-tab" onclick="switchScreen('outstanding',this)" id="nav-outstanding" style="min-width:60px;"><div class="nav-icon">⚠️</div><div class="nav-label">Unpaid</div></div>
-  <div class="nav-tab" onclick="switchScreen('inventory',this)" style="min-width:60px;"><div class="nav-icon">📦</div><div class="nav-label">Stock</div></div>
+  <div class="nav-tab" onclick="switchScreen('inventory',this)" style="min-width:60px;"><div class="nav-icon">📦</div><div class="nav-label">Shop</div></div>
 </div>
 
 <script>
@@ -2432,8 +2434,230 @@ async function executeOrderSave() {
 
 
 // ── INIT ──
+const DEFAULT_SHOPPING_REMINDERS = [
+  {id:'shop_001',name:'Butter',cat:'Ingredients',needed:true,note:'',reminder:''},
+  {id:'shop_002',name:'Whipping Cream',cat:'Ingredients',needed:true,note:'',reminder:''},
+  {id:'shop_003',name:'Chocolate',cat:'Ingredients',needed:true,note:'',reminder:''},
+  {id:'shop_004',name:'Strawberries',cat:'Fresh',needed:true,note:'',reminder:''},
+  {id:'shop_005',name:'Cake Box - 8 inch',cat:'Packaging',needed:true,note:'',reminder:''},
+  {id:'shop_006',name:'Cake Board',cat:'Packaging',needed:true,note:'',reminder:''},
+  {id:'shop_007',name:'Cake Toppers',cat:'Decorations',needed:true,note:'',reminder:''}
+];
+
+function normalizeShoppingCat(cat) {
+  if(cat === 'Raw Material') return 'Ingredients';
+  if(cat === 'Decoration') return 'Decorations';
+  return cat || 'Other';
+}
+
+function normalizeShoppingItem(item) {
+  if(item.needed !== undefined) {
+    return {id:item.id||invUid(),name:item.name||'',cat:normalizeShoppingCat(item.cat),needed:item.needed!==false,note:item.note||'',reminder:item.reminder||''};
+  }
+  return {id:item.id||invUid(),name:item.name||'',cat:normalizeShoppingCat(item.cat),needed:Number(item.qty||0)<=Number(item.threshold||0),note:'',reminder:''};
+}
+
+function loadInventory() {
+  const saved = localStorage.getItem('tcc_inventory');
+  if(saved) {
+    try {
+      const raw = JSON.parse(saved);
+      const isOldStockList = raw.length > 12 && raw.some(i=>i.needed === undefined && (i.qty !== undefined || i.threshold !== undefined));
+      if(isOldStockList) {
+        localStorage.setItem('tcc_inventory', JSON.stringify(DEFAULT_SHOPPING_REMINDERS));
+        return JSON.parse(JSON.stringify(DEFAULT_SHOPPING_REMINDERS));
+      }
+      const parsed = raw.map(normalizeShoppingItem).filter(i=>i.name);
+      return parsed.length ? parsed : JSON.parse(JSON.stringify(DEFAULT_SHOPPING_REMINDERS));
+    } catch(e) {}
+  }
+  localStorage.setItem('tcc_inventory', JSON.stringify(DEFAULT_SHOPPING_REMINDERS));
+  return JSON.parse(JSON.stringify(DEFAULT_SHOPPING_REMINDERS));
+}
+
+function saveInventory(inv) {
+  localStorage.setItem('tcc_inventory', JSON.stringify(inv.map(normalizeShoppingItem)));
+}
+
+function renderInventory() {
+  const inv = loadInventory();
+  const q = (document.getElementById('inv-search')?.value || '').toLowerCase();
+  const filtered = inv.filter(item=>{
+    const matchSearch = !q || item.name.toLowerCase().includes(q) || item.cat.toLowerCase().includes(q) || (item.note||'').toLowerCase().includes(q);
+    const matchFilter = invFilter === 'All' ||
+      ((invFilter === 'To Buy' || invFilter === 'Low Stock') && item.needed) ||
+      (invFilter === 'Done' && !item.needed) ||
+      invFilter === item.cat;
+    return matchSearch && matchFilter;
+  }).sort((a,b)=>{
+    if(a.needed !== b.needed) return a.needed ? -1 : 1;
+    if((a.reminder||'') !== (b.reminder||'')) return (a.reminder||'9999').localeCompare(b.reminder||'9999');
+    return a.name.localeCompare(b.name);
+  });
+
+  document.getElementById('inv-total').textContent = inv.length;
+  document.getElementById('inv-low').textContent = inv.filter(i=>i.needed).length;
+  document.getElementById('inv-ok').textContent = inv.filter(i=>!i.needed).length;
+
+  const list = document.getElementById('inv-list');
+  list.innerHTML = '';
+  if(!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">✓</div><p>No shopping reminders</p></div>';
+    return;
+  }
+
+  filtered.forEach(item=>{
+    const card = document.createElement('div');
+    card.className = 'inv-card ' + (item.needed ? 'low' : 'ok');
+    const reminder = item.reminder ? new Date(item.reminder + 'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'}) : '';
+    card.innerHTML = `
+      <div style="display:flex;gap:12px;align-items:flex-start;">
+        <input type="checkbox" ${item.needed?'':'checked'} onchange="toggleInvNeeded('${item.id}')" style="width:22px;height:22px;margin-top:2px;flex-shrink:0;">
+        <div style="flex:1;min-width:0;">
+          <div class="inv-name" style="${item.needed?'':'text-decoration:line-through;color:var(--text-muted);'}">${item.name}</div>
+          <div class="inv-cat">${item.cat}${reminder?' · Reminder: '+reminder:''}</div>
+          ${item.note?`<div style="font-size:12px;color:var(--text-secondary);margin-top:6px;line-height:1.4;">${item.note}</div>`:''}
+        </div>
+      </div>
+      <div class="inv-actions">
+        <button class="inv-btn inv-btn-edit" onclick="showInvForm('${item.id}')">Edit</button>
+        <button class="inv-btn inv-btn-del" onclick="deleteInvItem('${item.id}')">Delete</button>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+
+function ensureShoppingReminderFields() {
+  const unitWrap = document.getElementById('inv-unit')?.closest('.form-group');
+  if(unitWrap) unitWrap.style.display = 'none';
+  const qtyRow = document.getElementById('inv-qty')?.closest('.form-row-2');
+  if(qtyRow) qtyRow.style.display = 'none';
+  if(!document.getElementById('inv-reminder')) {
+    document.getElementById('inv-name').closest('.form-group').insertAdjacentHTML('afterend', `
+      <div class="form-group"><label class="form-label">Reminder date</label><input type="date" class="form-input" id="inv-reminder"></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" id="inv-notes" placeholder="e.g. Need 2 packs, buy from Coles"></textarea></div>
+      <div style="background:var(--cream);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+        <input type="checkbox" id="inv-needed" checked style="width:18px;height:18px;">
+        <label for="inv-needed" style="font-size:13px;color:var(--text-primary);margin:0;cursor:pointer;">Still need to buy this</label>
+      </div>`);
+  }
+  document.getElementById('inv-cat').innerHTML = '<option>Ingredients</option><option>Fresh</option><option>Packaging</option><option>Decorations</option><option>Other</option>';
+}
+
+function invQuickFill() {
+  const val = document.getElementById('inv-quick-select').value;
+  if(!val) return;
+  const [name, cat] = val.split('|');
+  ensureShoppingReminderFields();
+  document.getElementById('inv-name').value = name || '';
+  document.getElementById('inv-cat').value = normalizeShoppingCat(cat);
+  document.getElementById('inv-name').focus();
+}
+
+function showInvForm(id) {
+  ensureShoppingReminderFields();
+  const inv = loadInventory();
+  const item = id ? inv.find(x=>x.id===id) : null;
+  document.getElementById('inv-modal-title').textContent = id ? 'Edit Reminder' : 'Add Reminder';
+  document.getElementById('inv-edit-id').value = id || '';
+  document.getElementById('inv-quick-select').value = '';
+  document.getElementById('inv-name').value = item?.name || '';
+  document.getElementById('inv-cat').value = item?.cat || 'Ingredients';
+  document.getElementById('inv-reminder').value = item?.reminder || '';
+  document.getElementById('inv-notes').value = item?.note || '';
+  document.getElementById('inv-needed').checked = item ? item.needed !== false : true;
+  document.getElementById('inv-modal').style.display='flex';
+}
+
+function saveInvItem() {
+  ensureShoppingReminderFields();
+  const name = document.getElementById('inv-name').value.trim();
+  if(!name) { showToast('Please enter what to buy'); return; }
+  const inv = loadInventory();
+  const id = document.getElementById('inv-edit-id').value;
+  const item = {
+    id: id || invUid(),
+    name,
+    cat: document.getElementById('inv-cat').value,
+    needed: document.getElementById('inv-needed').checked,
+    note: document.getElementById('inv-notes').value.trim(),
+    reminder: document.getElementById('inv-reminder').value
+  };
+  if(id) {
+    const idx = inv.findIndex(x=>x.id===id);
+    if(idx >= 0) inv[idx] = item;
+  } else {
+    inv.unshift(item);
+  }
+  saveInventory(inv);
+  closeInvModal();
+  renderInventory();
+  showToast(id ? 'Reminder updated' : 'Reminder added');
+}
+
+function toggleInvNeeded(id) {
+  const inv = loadInventory();
+  const item = inv.find(x=>x.id===id);
+  if(!item) return;
+  item.needed = !item.needed;
+  saveInventory(inv);
+  renderInventory();
+}
+
+function deleteInvItem(id) {
+  if(!confirm('Delete this reminder?')) return;
+  saveInventory(loadInventory().filter(x=>x.id!==id));
+  renderInventory();
+  showToast('Reminder deleted');
+}
+
+function showShoppingList() {
+  const openItems = loadInventory().filter(i=>i.needed);
+  const content = document.getElementById('shopping-list-content');
+  if(!openItems.length) {
+    content.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:8px;">✓</div><p>Nothing on the shopping list.</p></div>';
+  } else {
+    content.innerHTML = openItems.map(i=>`
+      <div class="shop-item">
+        <div><div class="shop-item-name">${i.name}</div><div class="shop-item-detail">${i.cat}${i.note?' · '+i.note:''}</div></div>
+        <input type="checkbox" onchange="toggleInvNeeded('${i.id}');showShoppingList();" style="width:20px;height:20px;">
+      </div>`).join('');
+  }
+  document.getElementById('shopping-modal').style.display='flex';
+}
+
+function copyShoppingList() {
+  const openItems = loadInventory().filter(i=>i.needed);
+  if(!openItems.length) { showToast('Nothing to copy'); return; }
+  let text = 'Shopping List - The Cake Cart\n';
+  text += new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'}) + '\n\n';
+  openItems.forEach(i=>{ text += '- ' + i.name + (i.note ? ' (' + i.note + ')' : '') + '\n'; });
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(()=>showToast('Shopping list copied'));
+  } else {
+    const ta=document.createElement('textarea');
+    ta.value=text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('Shopping list copied');
+  }
+}
+
+function tidyShoppingReminderUi() {
+  const search = document.getElementById('inv-search');
+  if(search) search.placeholder = 'Search reminders...';
+  const shopBtn = document.querySelector('#screen-inventory button[onclick="showShoppingList()"]');
+  if(shopBtn) shopBtn.textContent = 'Copy shopping list';
+  document.querySelectorAll('.inv-chip').forEach(chip=>{
+    const action = chip.getAttribute('onclick') || '';
+    if(action.includes("'Low Stock'")) chip.style.display = 'none';
+  });
+  const modalQuick = document.querySelector('#inv-modal label.form-label');
+  if(modalQuick && modalQuick.textContent.includes('Quick')) modalQuick.textContent = 'Quick pick';
+}
+
 async function init(){
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
+  tidyShoppingReminderUi();
   await loadData();
   document.getElementById('loading-overlay').classList.add('hide');
   renderDashboard();
