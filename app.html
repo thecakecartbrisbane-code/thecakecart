@@ -276,6 +276,11 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
     <div style="flex:1;font-size:13px;color:#1A6EA8;font-weight:500;">Don't forget to log this month's overheads<br><span style="font-size:11px;font-weight:400;color:#378ADD;">Water, electricity, fuel — keeps your profit accurate</span></div>
     <span onclick="document.getElementById('overhead-reminder').style.display='none';switchScreen('finance',document.querySelectorAll('.nav-tab')[3]);showAddExpense();" style="font-size:11px;font-weight:600;color:#fff;background:#1A6EA8;padding:6px 12px;border-radius:99px;cursor:pointer;white-space:nowrap;">+ Add now</span>
   </div>
+  <div id="new-enquiry-alert" style="display:none;margin:12px 20px 0;background:#F0ECFE;border:1px solid #CFC3FF;border-radius:var(--radius-sm);padding:12px 14px;align-items:center;gap:10px;cursor:pointer;" onclick="showEnquiriesOnly()">
+    <div style="font-size:16px;">!</div>
+    <div style="flex:1;font-size:13px;color:#4B35A6;font-weight:600;"><span id="new-enquiry-count">0</span> <span id="new-enquiry-label">new customer enquiries</span><br><span style="font-size:11px;font-weight:400;color:#6B52D4;">Tap to review and quote</span></div>
+    <span style="font-size:11px;font-weight:700;color:#fff;background:#6B52D4;padding:6px 12px;border-radius:99px;white-space:nowrap;">Review</span>
+  </div>
   <div class="dash-section" id="attention-section"><div class="dash-section-title">Needs attention</div><div id="attention-list"></div></div>
   <div class="dash-section"><div class="dash-section-title" id="upcoming-title">📅 Upcoming orders</div><div id="upcoming-list"></div></div>
   <div class="dash-section"><div class="dash-section-title" id="active-title">Active orders</div><div id="active-list"></div></div>
@@ -1091,6 +1096,15 @@ function renderDashboard() {
     return isActive && notInUp7;
   }).sort((a,b)=>(a.date||'').localeCompare(b.date||''));
   const today=new Date().toISOString().slice(0,10);
+  const openEnquiries=orders.filter(o=>o.status==='Enquiry');
+  const enquiryAlert=document.getElementById('new-enquiry-alert');
+  const enquiryCount=document.getElementById('new-enquiry-count');
+  const enquiryLabel=document.getElementById('new-enquiry-label');
+  if(enquiryAlert&&enquiryCount){
+    enquiryCount.textContent=openEnquiries.length;
+    if(enquiryLabel) enquiryLabel.textContent=openEnquiries.length===1?'new customer enquiry':'new customer enquiries';
+    enquiryAlert.style.display=openEnquiries.length?'flex':'none';
+  }
   const att=orders.filter(o=>{ const b=(o.total||0)-(o.paid||0); return (b>0&&['Confirmed','In Progress','Ready'].includes(o.status))||(o.reminder&&o.reminder.slice(0,10)<=today&&!['Completed','Cancelled','Delivered'].includes(o.status)); });
   const attList=document.getElementById('attention-list');
   const attSec=document.getElementById('attention-section');
@@ -1138,6 +1152,7 @@ function mkCard(o, highlight) {
   const isTomorrow = (o.date||'').slice(0,10)===_tomStr;
   if(isToday) el.style.cssText='border-left:4px solid #B83A3A;border-color:#B83A3A;background:#FEF5F5;';
   else if(isTomorrow) el.style.cssText='border-left:4px solid #D4943A;border-color:#F5E4C8;background:#FFFAF2;';
+  else if(o.status==='Enquiry') el.style.cssText='border-left:4px solid #6B52D4;border-color:#CFC3FF;background:#FBFAFF;';
   const urgencyBadge = isToday?'<span style="font-size:10px;font-weight:700;color:#fff;background:#B83A3A;padding:2px 8px;border-radius:99px;margin-left:6px;">TODAY</span>'
     : isTomorrow?'<span style="font-size:10px;font-weight:700;color:#fff;background:#D4943A;padding:2px 8px;border-radius:99px;margin-left:6px;">TOMORROW</span>':'';
   el.innerHTML=`<div class="order-card-top"><div><div class="order-name">${o.name}${urgencyBadge}</div><div class="order-detail">${ds}${o.time?' · '+fmtTime(o.time):''}${o.type?' · '+o.type:''}</div></div>${sBadge(o.status)}</div><div class="order-bottom"><span class="order-price">$${(o.total||0).toLocaleString()}</span><span class="order-balance ${bal<=0?'paid':''}">${bal>0?'$'+bal+' owing':'✓ Paid'}</span></div><div class="order-meta">${o.flavour?`<span class="badge badge-source">${o.flavour}</span>`:''}${o.source?`<span class="badge badge-source">${o.source}</span>`:''}</div>`;
@@ -1145,6 +1160,12 @@ function mkCard(o, highlight) {
 }
 
 // ── ORDER LIST ──
+function showEnquiriesOnly(){
+  switchScreen('orders',document.querySelectorAll('.nav-tab')[1]);
+  currentFilter='Enquiry';
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active',c.textContent.trim()==='Enquiry'));
+  renderOrderList();
+}
 function setFilter(el,f){currentFilter=f;document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');renderOrderList();}
 function renderOrderList(){
   const q=(document.getElementById('order-search')?.value||'').toLowerCase();
