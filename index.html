@@ -1,20 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Cake Cart — Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FBF7F2;
+      --warm-white: #FEFCFA;
+      --chocolate: #3D2B1F;
+      --rose: #C47A6E;
+      --rose-dark: #9E554B;
+      --sage: #8BA888;
+      --text-muted: #8A7A70;
+      --border: #E8DDD4;
+    }
 
-<div class="title">The Cake Cart</div>
-<div class="subtitle">Rolling in Sweetness 🛒</div>
-<div class="box">
-  <div class="error" id="err">Incorrect password. Please try again.</div>
-  <label class="label">Password</label>
-  <input type="password" class="input" id="pw" placeholder="Enter password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()">
-  <div class="error" id="err">Incorrect PIN. Please try again.</div>
-  <label class="label">PIN</label>
-  <input type="password" class="input" id="pw" placeholder="Enter PIN" inputmode="numeric" autocomplete="one-time-code" onkeydown="if(event.key==='Enter')login()">
-  <button class="btn" onclick="login()">Access App</button>
-</div>
-<div class="footer">The Cake Cart — Business Manager</div>
+    * {
+      box-sizing: border-box;
+    }
 
-<script>
-const PASSWORD = 'sahibo_re_govaliyo_re';
-const PASSWORD = '7596';
-function login() {
-  const pw = document.getElementById('pw').value;
-  const err = document.getElementById('err');
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--cream);
+      font-family: "DM Sans", sans-serif;
+      color: var(--chocolate);
+      padding: 24px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--warm-white);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px 26px;
+      box-shadow: 0 18px 45px rgba(61, 43, 31, 0.12);
+      text-align: center;
+    }
+
+    .brand {
+      font-family: "Playfair Display", serif;
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 26px;
+    }
+
+    .error {
+      display: none;
+      background: #FCECEC;
+      border: 1px solid #F5C5C5;
+      color: #B83A3A;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      text-align: left;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--chocolate);
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 14px;
+      font-size: 20px;
+      text-align: center;
+      letter-spacing: 4px;
+      color: var(--chocolate);
+      background: #fff;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    input:focus {
+      border-color: var(--rose);
+      box-shadow: 0 0 0 3px rgba(196, 122, 110, 0.16);
+    }
+
+    button {
+      width: 100%;
+      border: 0;
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--rose);
+      cursor: pointer;
+      font-family: "DM Sans", sans-serif;
+    }
+
+    button:hover {
+      background: var(--rose-dark);
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">The Cake Cart</div>
+    <div class="subtitle">Rolling in Sweetness</div>
+
+    <div class="error" id="err">Incorrect PIN. Please try again.</div>
+
+    <label for="pw">PIN</label>
+    <input
+      type="password"
+      id="pw"
+      placeholder="7596"
+      inputmode="numeric"
+      autocomplete="one-time-code"
+      maxlength="4"
+      autofocus
+      onkeydown="if(event.key === 'Enter') login()"
+    />
+
+    <button onclick="login()">Access App</button>
+
+    <div class="footer">The Cake Cart — Business Manager</div>
+  </main>
+
+  <script>
+    const PIN = "7596";
+
+    function login() {
+      const input = document.getElementById("pw");
+      const err = document.getElementById("err");
+
+      if (input.value.trim() === PIN) {
+        sessionStorage.setItem("tcc_auth", "yes");
+        window.location.href = "app.html";
+        return;
+      }
+
+      err.style.display = "block";
+      input.value = "";
+      input.focus();
+    }
+
+    if (sessionStorage.getItem("tcc_auth") === "yes") {
+      window.location.href = "app.html";
+    }
+  </script>
+</body>
+</html>
