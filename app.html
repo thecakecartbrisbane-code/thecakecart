@@ -288,7 +288,7 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
 <!-- ORDERS -->
 <div class="screen" id="screen-orders">
   <div class="section-head"><div class="section-title">Orders</div><div class="section-sub" id="orders-count"></div></div>
-  <div class="search-wrap"><input type="text" class="search-input" placeholder="🔍  Search name, cake type…" id="order-search" oninput="renderOrderList()"></div>
+  <div class="search-wrap"><input type="text" class="search-input" placeholder="🔍  Search name, type…" id="order-search" oninput="renderOrderList()"></div>
   <div class="filter-row">
     <div class="filter-chip active" onclick="setFilter(this,'all')">All</div>
     <div class="filter-chip" onclick="setFilter(this,'Enquiry')">Enquiry</div>
@@ -328,8 +328,8 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
       <div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="f-time"></div>
     </div>
     <div class="form-row-2">
-      <div class="form-group"><label class="form-label">Cake type *</label><select class="form-select" id="f-type"><option value="">Select…</option><option>Bento</option><option>Cake</option><option>Hamper</option><option>Custom</option></select></div>
-      <div class="form-group"><label class="form-label">Flavour</label><select class="form-select" id="f-flavour"><option value="">Select…</option><option>Chocolate</option><option>Rasmalai</option><option>Orange</option><option>Red Velvet</option><option>Vanilla</option><option>Lemon</option><option>Caramel</option><option>Strawberry</option><option>Matcha</option><option>Mixed / custom</option></select></div>
+      <div class="form-group"><label class="form-label">Type *</label><select class="form-select" id="f-type"><option value="">Select…</option><option>Cake</option><option>Bento</option><option>Hamper</option><option>Dessert Cup</option><option>Custom Pastry</option></select></div>
+      <div class="form-group"><label class="form-label">Flavour</label><select class="form-select" id="f-flavour"><option value="">Select…</option><option>Chocolate Cake</option><option>Black Forest Cake</option><option>Chocolate Truffle Cake</option><option>Oreo Cake</option><option>KitKat Cake</option><option>Cookies &amp; Cream</option><option>Vanilla</option><option>Red Velvet</option><option>Biscoff</option><option>Ferrero Rocher</option><option>Blueberry</option><option>Mango</option><option>Orange Silk &amp; Almond</option><option>Chocolate Strawberry</option><option>Chocolate Raspberry</option><option>Mixed Fruit</option><option>Pineapple</option><option>Mixed Berries</option><option>Rasmalai</option><option>Gulab Jamun</option><option>Kaju Katli</option><option>Rabri</option><option>Rose &amp; Pistachio</option><option>Custom</option></select></div>
     </div>
     <div class="form-group"><label class="form-label">Theme / design notes</label><textarea class="form-textarea" id="f-theme" placeholder="e.g. Floral, pastel pink, 'Happy Birthday Mia'"></textarea></div>
     <div class="form-row-2">
@@ -470,7 +470,7 @@ if(sessionStorage.getItem('tcc_auth') !== 'yes') {
 
   <!-- Cake types bar -->
   <div style="padding:20px 20px 0;">
-    <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Most popular cake types</div>
+    <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Most popular types</div>
     <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
       <canvas id="chart-types" height="180"></canvas>
     </div>
@@ -1289,7 +1289,7 @@ function updateBalance(){
 
 async function saveOrder(){
   const name=document.getElementById('f-name').value.trim(), date=document.getElementById('f-date').value, type=document.getElementById('f-type').value;
-  if(!name||!date||!type){showToast('Please fill in name, date & cake type');return;}
+  if(!name||!date||!type){showToast('Please fill in name, date & type');return;}
   const id=document.getElementById('edit-order-id').value;
   const isPastOrder=document.getElementById('f-past-order')?.checked;
   const data={
