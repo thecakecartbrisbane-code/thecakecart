@@ -217,7 +217,7 @@
 <script>
 // Force reload if this is a cached old version
 (function(){
-  var v = '3.4';
+  var v = 'test-sync-4.1';
   var stored = sessionStorage.getItem('app_version');
   if(stored && stored !== v) {
     sessionStorage.setItem('app_version', v);
@@ -230,10 +230,8 @@
 </head>
 <body>
 <script>
-// Redirect to login if not authenticated
-if(sessionStorage.getItem('tcc_auth') !== 'yes') {
-  window.location.href = 'index.html';
-}
+// TEST ONLY: isolated dummy-data test page does not redirect to the live app login.
+// Never use this bypass in production app.html.
 </script>
 
 
