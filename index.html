@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>The Cake Cart — Login</title>
+<link rel="apple-touch-icon" href="cake-cart-icon.jpg?v=1">
+<link rel="icon" type="image/jpeg" href="cake-cart-icon.jpg?v=1">
+<meta name="apple-mobile-web-app-title" content="Cake Cart">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -89,7 +92,7 @@ function login() {
     // Store auth in sessionStorage so app page knows we're logged in
     sessionStorage.setItem('tcc_auth', 'yes');
     // Redirect to main app
-    window.location.href = 'app.html';
+    window.location.href = 'app.html?v=4.1.2';
   } else {
     err.classList.add('show');
     document.getElementById('pw').value = '';
@@ -98,7 +101,7 @@ function login() {
 }
 // If already authenticated, skip login
 if(sessionStorage.getItem('tcc_auth') === 'yes') {
-  window.location.href = 'app.html';
+  window.location.href = 'app.html?v=4.1.2';
 }
 </script>
 </body>
