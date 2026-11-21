@@ -1275,8 +1275,30 @@ function renderPackagingStock() {
 // Suggested common cake sizes. Additional sizes are pulled from previous orders and stock entries.
 // Presets are suggestions, not a claim that the business has these sizes in stock.
 const PACK_SIZE_PRESETS = {
-  Box: ['4 × 4 × 4 inch','6 × 6 × 6 inch','7 × 7 × 6 inch','8 × 8 × 6 inch','10 × 10 × 6 inch','12 × 12 × 6 inch','14 × 14 × 6 inch','12 × 9 × 6 inch','14 × 10 × 6 inch','16 × 12 × 6 inch'],
-  Board: ['4 inch round','6 inch round','8 inch round','10 inch round','12 inch round','14 inch round','16 inch round','6 inch square','8 inch square','10 inch square','12 inch square','14 inch square','12 × 9 inch rectangle','14 × 10 inch rectangle','16 × 12 inch rectangle','18 × 14 inch rectangle']
+  // Bake Boss invoice/history entries first; generic sizes follow as optional choices.
+  Box: [
+    '8 × 8 × 5 inch', '8 × 8 × 10 inch',
+    '10 × 10 × 10 inch', '10 × 10 × 10 inch — window',
+    '12 × 12 × 6 inch', '12 × 12 × 8 inch — window',
+    '12 × 12 × 12 inch', '12 × 12 × 12 inch — window',
+    '12 × 12 × 14 inch — side window',
+    '16 × 16 × 8 inch — window', '16 × 16 × 12 inch',
+    '6-hole cupcake box', '12-hole cupcake box',
+    '4 × 4 × 4 inch', '6 × 6 × 6 inch', '7 × 7 × 6 inch',
+    '8 × 8 × 6 inch', '10 × 10 × 6 inch', '14 × 14 × 6 inch',
+    '12 × 9 × 6 inch', '14 × 10 × 6 inch', '16 × 12 × 6 inch'
+  ],
+  Board: [
+    '5 inch round cardboard', '7 inch round cardboard',
+    '8 inch round cardboard', '10 inch round cardboard',
+    '10 inch square cardboard', '12 inch round white MDF', '14 inch MDF',
+    '4 inch round', '6 inch round', '8 inch round',
+    '10 inch round', '12 inch round', '14 inch round', '16 inch round',
+    '6 inch square', '8 inch square', '10 inch square',
+    '12 inch square', '14 inch square',
+    '12 × 9 inch rectangle', '14 × 10 inch rectangle',
+    '16 × 12 inch rectangle', '18 × 14 inch rectangle'
+  ]
 };
 function packagingSizes(type) {
   const seen=new Set(),list=[];
