@@ -366,10 +366,9 @@
     <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📦 Box and board sizes</div>
       <div class="form-row-2">
-        <div class="form-group"><label class="form-label">Box size</label><input id="f-box-size" class="form-input" list="pack-box-list" placeholder="e.g. 10 × 10 × 6 inch" oninput="showPackagingAvailability()"></div>
-        <div class="form-group"><label class="form-label">Board size</label><input id="f-board-size" class="form-input" list="pack-board-list" placeholder="e.g. 12 inch round" oninput="showPackagingAvailability()"></div>
+        <div class="form-group"><label class="form-label">Box size</label><select id="f-box-size" class="form-select" onchange="packagingSelectionChanged('Box')"></select><input id="f-box-custom" class="form-input" style="display:none;margin-top:6px" placeholder="Enter custom box dimensions" oninput="showPackagingAvailability()"></div>
+        <div class="form-group"><label class="form-label">Board size</label><select id="f-board-size" class="form-select" onchange="packagingSelectionChanged('Board')"></select><input id="f-board-custom" class="form-input" style="display:none;margin-top:6px" placeholder="Enter custom board size and shape" oninput="showPackagingAvailability()"></div>
       </div>
-      <datalist id="pack-box-list"></datalist><datalist id="pack-board-list"></datalist>
       <div id="pack-availability" style="font-size:11px;color:var(--text-muted);">Manage stock in the Stock tab.</div>
     </div>
     <div class="form-group"><label class="form-label">Internal notes</label><textarea class="form-textarea" id="f-notes" placeholder="Allergies, address, special requests…"></textarea></div>
@@ -625,8 +624,8 @@
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Record how many boxes and boards you have. Quantities are adjusted manually, not automatically when an enquiry is created.</p>
     <div style="background:var(--warm-white);border:1px solid var(--border);padding:14px;border-radius:var(--radius);">
       <div class="form-row-2">
-        <div class="form-group"><label class="form-label">Item</label><select id="pack-type" class="form-select"><option value="Box">Cake box</option><option value="Board">Cake board</option></select></div>
-        <div class="form-group"><label class="form-label">Size</label><input id="pack-size" class="form-input" placeholder="e.g. 10 inch square"></div>
+        <div class="form-group"><label class="form-label">Item</label><select id="pack-type" class="form-select" onchange="updateStockSizeDropdown()"><option value="Box">Cake box</option><option value="Board">Cake board</option></select></div>
+        <div class="form-group"><label class="form-label">Size</label><select id="pack-size-select" class="form-select" onchange="stockSizeChanged()"></select><input id="pack-size" class="form-input" style="display:none;margin-top:6px" placeholder="Enter custom size"></div>
       </div>
       <div class="form-row-2">
         <div class="form-group"><label class="form-label">Quantity available</label><input id="pack-qty" type="number" min="0" step="1" class="form-input" placeholder="e.g. 5"></div>
@@ -1244,20 +1243,20 @@ function savePackagingStock(rows) { localStorage.setItem(PACK_STOCK_KEY,JSON.str
 function escapePack(s) { return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function upsertPackagingStock() {
   const type=document.getElementById('pack-type').value;
-  const size=document.getElementById('pack-size').value.trim();
+  const size=selectedStockSize();
   const qty=Number(document.getElementById('pack-qty').value);
   if(!size||!Number.isInteger(qty)||qty<0||document.getElementById('pack-qty').value===''){showToast('Enter a size and whole-number quantity');return;}
   const rows=packagingStock();
   const idx=rows.findIndex(x=>x.type===type&&x.size.toLowerCase()===size.toLowerCase());
   if(idx<0)rows.push({type,size,qty});else rows[idx].qty=qty;
   try{savePackagingStock(rows);}catch(e){showToast('Unable to save stock on this device');return;}
-  document.getElementById('pack-size').value='';document.getElementById('pack-qty').value='';
-  renderPackagingStock();updatePackagingOptions();showToast('Packaging stock updated ✓');
+  document.getElementById('pack-qty').value='';
+  renderPackagingStock();updatePackagingOptions();updateStockSizeDropdown();showToast('Packaging stock updated ✓');
 }
 function deletePackagingStock(type,size) {
   if(!confirm('Remove this stock entry?'))return;
   savePackagingStock(packagingStock().filter(x=>!(x.type===type&&x.size===size)));
-  renderPackagingStock();updatePackagingOptions();
+  renderPackagingStock();updatePackagingOptions();updateStockSizeDropdown();
 }
 function renderPackagingStock() {
   const el=document.getElementById('pack-stock-list');if(!el)return;
@@ -1268,26 +1267,87 @@ function renderPackagingStock() {
     const line=document.createElement('div');line.style.cssText='display:flex;align-items:center;gap:8px;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;';
     const detail=document.createElement('span');detail.textContent=x.type+' · '+x.size+' — '+x.qty+' available';
     const actions=document.createElement('div');actions.style.cssText='display:flex;gap:4px;';
-    const edit=document.createElement('button');edit.className='btn btn-ghost btn-sm';edit.textContent='Edit';edit.onclick=()=>{document.getElementById('pack-type').value=x.type;document.getElementById('pack-size').value=x.size;document.getElementById('pack-qty').value=x.qty;document.getElementById('pack-qty').focus();};
+    const edit=document.createElement('button');edit.className='btn btn-ghost btn-sm';edit.textContent='Edit';edit.onclick=()=>{document.getElementById('pack-type').value=x.type;updateStockSizeDropdown();setPackagingSelect('pack-size-select','pack-size',x.size);document.getElementById('pack-qty').value=x.qty;document.getElementById('pack-qty').focus();};
     const del=document.createElement('button');del.className='btn btn-ghost btn-sm';del.textContent='Remove';del.onclick=()=>deletePackagingStock(x.type,x.size);
     actions.append(edit,del);line.append(detail,actions);el.append(line);
   });
 }
-function updatePackagingOptions() {
-  const rows=packagingStock();
-  for(const [type,id] of [['Box','pack-box-list'],['Board','pack-board-list']]){
-    document.getElementById(id).innerHTML=rows.filter(x=>x.type===type).map(x=>'<option value="'+escapePack(x.size)+'"></option>').join('');
+// Suggested common cake sizes. Additional sizes are pulled from previous orders and stock entries.
+// Presets are suggestions, not a claim that the business has these sizes in stock.
+const PACK_SIZE_PRESETS = {
+  Box: ['4 × 4 × 4 inch','6 × 6 × 6 inch','7 × 7 × 6 inch','8 × 8 × 6 inch','10 × 10 × 6 inch','12 × 12 × 6 inch','14 × 14 × 6 inch','12 × 9 × 6 inch','14 × 10 × 6 inch','16 × 12 × 6 inch'],
+  Board: ['4 inch round','6 inch round','8 inch round','10 inch round','12 inch round','14 inch round','16 inch round','6 inch square','8 inch square','10 inch square','12 inch square','14 inch square','12 × 9 inch rectangle','14 × 10 inch rectangle','16 × 12 inch rectangle','18 × 14 inch rectangle']
+};
+function packagingSizes(type) {
+  const seen=new Set(),list=[];
+  const add=size=>{size=String(size||'').trim();if(size&&!seen.has(size.toLowerCase())){seen.add(size.toLowerCase());list.push(size);}};
+  PACK_SIZE_PRESETS[type].forEach(add);
+  packagingStock().filter(x=>x.type===type).forEach(x=>add(x.size));
+  orders.forEach(o=>{const p=unpackOrderNotes(o.notes||'');add(type==='Box'?p.box:p.board);});
+  return list;
+}
+function setPackagingSelect(selectId,customId,value) {
+  const sel=document.getElementById(selectId),custom=document.getElementById(customId);
+  if(!sel||!custom)return;
+  value=String(value||'').trim();
+  if(value&&![...sel.options].some(o=>o.value===value)){
+    sel.value='__other__';custom.style.display='block';custom.value=value;
+  }else{
+    sel.value=value;custom.value='';custom.style.display=value==='__other__'?'block':'none';
   }
+}
+function fillPackagingSelect(selectId,customId,type,placeholder) {
+  const sel=document.getElementById(selectId);
+  const prior=selectedPackagingValue(type);
+  sel.innerHTML='';
+  const none=document.createElement('option');none.value='';none.textContent=placeholder;sel.add(none);
+  packagingSizes(type).forEach(size=>{const o=document.createElement('option');o.value=size;o.textContent=size;sel.add(o);});
+  const other=document.createElement('option');other.value='__other__';other.textContent='Other size — enter manually';sel.add(other);
+  setPackagingSelect(selectId,customId,prior);
+}
+function selectedPackagingValue(type) {
+  const id=type==='Box'?'f-box-size':'f-board-size',custom=type==='Box'?'f-box-custom':'f-board-custom';
+  const sel=document.getElementById(id);
+  if(!sel)return '';
+  return sel.value==='__other__'?document.getElementById(custom).value.trim():sel.value;
+}
+function packagingSelectionChanged(type) {
+  const id=type==='Box'?'f-box-size':'f-board-size',custom=type==='Box'?'f-box-custom':'f-board-custom';
+  document.getElementById(custom).style.display=document.getElementById(id).value==='__other__'?'block':'none';
   showPackagingAvailability();
+}
+function updatePackagingOptions() {
+  fillPackagingSelect('f-box-size','f-box-custom','Box','Select box size');
+  fillPackagingSelect('f-board-size','f-board-custom','Board','Select board size');
+  showPackagingAvailability();
+}
+function selectedStockSize() {
+  const sel=document.getElementById('pack-size-select');
+  return sel.value==='__other__'?document.getElementById('pack-size').value.trim():sel.value.trim();
+}
+function stockSizeChanged() {
+  const custom=document.getElementById('pack-size');
+  custom.style.display=document.getElementById('pack-size-select').value==='__other__'?'block':'none';
+}
+function updateStockSizeDropdown() {
+  const type=document.getElementById('pack-type').value,sel=document.getElementById('pack-size-select');
+  if(!sel)return;
+  const previous=selectedStockSize();
+  sel.innerHTML='';
+  const none=document.createElement('option');none.value='';none.textContent='Select size';sel.add(none);
+  packagingSizes(type).forEach(size=>{const o=document.createElement('option');o.value=size;o.textContent=size;sel.add(o);});
+  const other=document.createElement('option');other.value='__other__';other.textContent='Other size — enter manually';sel.add(other);
+  setPackagingSelect('pack-size-select','pack-size',previous);
+  stockSizeChanged();
 }
 function showPackagingAvailability() {
   const el=document.getElementById('pack-availability');if(!el)return;
   const rows=packagingStock(),messages=[];
-  for(const [type,input] of [['Box','f-box-size'],['Board','f-board-size']]){
-    const size=document.getElementById(input).value.trim();
+  for(const type of ['Box','Board']){
+    const size=selectedPackagingValue(type);
     if(!size)continue;
     const item=rows.find(x=>x.type===type&&x.size.toLowerCase()===size.toLowerCase());
-    messages.push(type+': '+(item?item.qty+' available on this device':'not recorded in stock'));
+    messages.push(type+': '+(item?item.qty+' available on this device':'stock not recorded'));
   }
   el.textContent=messages.length?messages.join(' · '):'Manage stock in the Stock tab.';
 }
@@ -1302,8 +1362,8 @@ function unpackOrderNotes(note) {
 }
 function packOrderNotes() {
   const notes=document.getElementById('f-notes').value.trim();
-  const box=document.getElementById('f-box-size').value.trim();
-  const board=document.getElementById('f-board-size').value.trim();
+  const box=selectedPackagingValue('Box');
+  const board=selectedPackagingValue('Board');
   return notes+((box||board)?(notes?'\n':'')+PACK_NOTE_PREFIX+JSON.stringify({box,board}):'');
 }
 
@@ -1312,7 +1372,8 @@ function newOrder(){
   document.getElementById('edit-order-id').value='';
   document.getElementById('add-title').textContent='New Order';
   document.getElementById('delete-btn').style.display='none';
-  ['f-name','f-phone','f-theme','f-notes','f-box-size','f-board-size'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-phone','f-theme','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-box-size','f-board-size','f-box-custom','f-board-custom'].forEach(id=>document.getElementById(id).value='');
   updatePackagingOptions();
   setReferenceImage('');
   ['f-source','f-type','f-flavour'].forEach(id=>document.getElementById(id).selectedIndex=0);
@@ -1354,9 +1415,10 @@ function editOrder(id){
   document.getElementById('f-order-date').value=_oDate.getFullYear()+'-'+String(_oDate.getMonth()+1).padStart(2,'0')+'-'+String(_oDate.getDate()).padStart(2,'0');
   const packing=unpackOrderNotes(o.notes||'');
   document.getElementById('f-notes').value=packing.notes;
-  document.getElementById('f-box-size').value=packing.box;
-  document.getElementById('f-board-size').value=packing.board;
   updatePackagingOptions();
+  setPackagingSelect('f-box-size','f-box-custom',packing.box);
+  setPackagingSelect('f-board-size','f-board-custom',packing.board);
+  showPackagingAvailability();
   updateBalance();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-add').classList.add('active');
@@ -2732,6 +2794,7 @@ function tidyShoppingReminderUi() {
 async function init(){
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
   renderPackagingStock();
+  updateStockSizeDropdown();
   await loadData();
   document.getElementById('loading-overlay').classList.add('hide');
   renderDashboard();
