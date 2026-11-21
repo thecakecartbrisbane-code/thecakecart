@@ -363,6 +363,15 @@
       <div class="form-group"><label class="form-label">Reminder date</label><input type="date" class="form-input" id="f-reminder"></div>
       <div class="form-group"><label class="form-label">Delivery type</label><select class="form-select" id="f-delivery"><option>Pickup</option><option>Delivery</option></select></div>
     </div>
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">📦 Box and board sizes</div>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Box size</label><input id="f-box-size" class="form-input" list="pack-box-list" placeholder="e.g. 10 × 10 × 6 inch" oninput="showPackagingAvailability()"></div>
+        <div class="form-group"><label class="form-label">Board size</label><input id="f-board-size" class="form-input" list="pack-board-list" placeholder="e.g. 12 inch round" oninput="showPackagingAvailability()"></div>
+      </div>
+      <datalist id="pack-box-list"></datalist><datalist id="pack-board-list"></datalist>
+      <div id="pack-availability" style="font-size:11px;color:var(--text-muted);">Manage stock in the Stock tab.</div>
+    </div>
     <div class="form-group"><label class="form-label">Internal notes</label><textarea class="form-textarea" id="f-notes" placeholder="Allergies, address, special requests…"></textarea></div>
     <!-- Past order toggle -->
     <div style="background:var(--cream);border-radius:var(--radius-sm);padding:12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;">
@@ -477,6 +486,14 @@
     </div>
   </div>
 
+  <!-- Orders per month chart -->
+  <div style="padding:20px 20px 0;">
+    <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Orders per month (last 12 months)</div>
+    <div style="background:var(--warm-white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;">
+      <div style="height:220px;"><canvas id="chart-monthly-orders"></canvas></div>
+      <div id="monthly-orders-total" style="font-size:12px;color:var(--text-muted);margin-top:8px;"></div>
+    </div>
+  </div>
   <!-- Order sources donut -->
   <div style="padding:20px 20px 0;">
     <div style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Order sources</div>
@@ -601,161 +618,25 @@
 </div>
 
 
-<!-- SHOPPING REMINDERS SCREEN -->
+<!-- PACKAGING STOCK SCREEN -->
 <div class="screen" id="screen-inventory">
-  <!-- Summary row -->
-  <div class="section-head" style="padding-bottom:8px;">
-    <div><div class="section-title">Shopping Reminders</div><div class="section-sub">Simple checklist for things to buy</div></div>
-    <button onclick="showInvForm()" style="background:var(--chocolate);color:var(--warm-white);border:none;border-radius:var(--radius-sm);padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">+ Add</button>
-  </div>
-  <div class="inv-summary">
-    <div class="inv-summary-card"><div class="inv-summary-val" id="inv-total">0</div><div class="inv-summary-label">Total</div></div>
-    <div class="inv-summary-card" style="background:#FEF0E8;border-color:rgba(192,83,10,0.2);"><div class="inv-summary-val" id="inv-low" style="color:#C0530A;">0</div><div class="inv-summary-label">To buy</div></div>
-    <div class="inv-summary-card" style="background:var(--sage-light);border-color:rgba(90,122,87,0.2);"><div class="inv-summary-val" id="inv-ok" style="color:var(--sage-dark);">0</div><div class="inv-summary-label">Done</div></div>
-  </div>
-
-  <!-- Shopping list button -->
-  <div style="padding:10px 20px 0;">
-    <button onclick="showShoppingList()" style="width:100%;padding:11px;background:var(--amber-light);color:#8A5A10;border:1px solid rgba(212,148,58,0.4);border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">🛒 Generate Shopping List</button>
-  </div>
-
-  <!-- Search + filter -->
-  <div style="padding:10px 20px 4px;">
-    <input class="inv-search" type="text" placeholder="🔍  Search items…" id="inv-search" oninput="renderInventory()">
-  </div>
-  <div class="inv-filter-row">
-    <div class="inv-chip active" onclick="setInvFilter(this,'All')">All</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Low Stock')">⚠️ Low Stock</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'To Buy')">To buy</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Done')">Done</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Ingredients')">Ingredients</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Fresh')">Fresh</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Packaging')">Packaging</div>
-    <div class="inv-chip" onclick="setInvFilter(this,'Decorations')">Decorations</div>
-  </div>
-
-  <div style="padding:0 20px;" id="inv-list"></div>
-  <div style="height:20px;"></div>
-</div>
-
-<!-- SHOPPING REMINDER ADD/EDIT MODAL -->
-<div id="inv-modal" style="display:none;position:fixed;inset:0;background:rgba(61,43,31,0.55);z-index:700;align-items:flex-end;justify-content:center;">
-  <div style="background:var(--warm-white);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:430px;max-height:90vh;overflow-y:auto;">
-    <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--chocolate);margin-bottom:16px;" id="inv-modal-title">Add Item</div>
-
-    <!-- Quick select from predefined -->
-    <div class="form-group">
-      <label class="form-label">Quick pick</label>
-      <select class="form-select" id="inv-quick-select" onchange="invQuickFill()">
-        <option value="">— choose a common item —</option>
-        <optgroup label="Raw Material">
-          <option value="Flour|Raw Material|kg|2">Flour</option>
-          <option value="Sugar|Raw Material|kg|2">Sugar</option>
-          <option value="Icing Sugar|Raw Material|kg|1">Icing Sugar</option>
-          <option value="Cocoa Powder|Raw Material|kg|0.5">Cocoa Powder</option>
-          <option value="Chocolate|Raw Material|kg|1">Chocolate</option>
-          <option value="Butter|Raw Material|kg|2">Butter</option>
-          <option value="Milk|Raw Material|litre|2">Milk</option>
-          <option value="Condensed Milk|Raw Material|pcs|4">Condensed Milk</option>
-          <option value="Whipping Cream|Raw Material|litre|1">Whipping Cream</option>
-        </optgroup>
-        <optgroup label="Fresh">
-          <option value="Strawberries|Fresh|kg|0.5">Strawberries</option>
-          <option value="Mango|Fresh|kg|1">Mango (Frozen)</option>
-          <option value="Blueberries|Fresh|box|2">Blueberries</option>
-        </optgroup>
-        <optgroup label="Packaging">
-          <option value="Cake Box – 6inch|Packaging|pcs|5">Cake Box – 6"</option>
-          <option value="Cake Box – 8inch|Packaging|pcs|5">Cake Box – 8"</option>
-          <option value="Cake Box – 10inch|Packaging|pcs|5">Cake Box – 10"</option>
-          <option value="Cake Board|Packaging|pcs|5">Cake Board</option>
-          <option value="Cupcake Box|Packaging|pcs|5">Cupcake Box</option>
-          <option value="Dessert Cups|Packaging|pcs|10">Dessert Cups</option>
-          <option value="Spoons|Packaging|pcs|20">Spoons</option>
-        </optgroup>
-        <optgroup label="Decoration">
-          <option value="Flowers|Decoration|pcs|5">Flowers</option>
-          <option value="Cake Toppers|Decoration|pcs|5">Cake Toppers</option>
-          <option value="Candles|Decoration|pcs|10">Candles</option>
-          <option value="Sprinkles|Decoration|pcs|3">Sprinkles</option>
-        </optgroup>
-      </select>
-    </div>
-
-    <input type="hidden" id="inv-edit-id">
-    <div class="form-group">
-      <label class="form-label">What to buy *</label>
-      <input type="text" class="form-input" id="inv-name" placeholder="e.g. Butter">
-    </div>
-    <div class="form-row-2">
-      <div class="form-group">
-        <label class="form-label">Category</label>
-        <select class="form-select" id="inv-cat">
-          <option>Raw Material</option>
-          <option>Fresh</option>
-          <option>Packaging</option>
-          <option>Decoration</option>
-        </select>
+  <div class="section-head"><div class="section-title">Packaging Stock</div><div class="section-sub">Cake boxes and boards by size</div></div>
+  <div style="padding:12px 20px;">
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px;">Record how many boxes and boards you have. Quantities are adjusted manually, not automatically when an enquiry is created.</p>
+    <div style="background:var(--warm-white);border:1px solid var(--border);padding:14px;border-radius:var(--radius);">
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Item</label><select id="pack-type" class="form-select"><option value="Box">Cake box</option><option value="Board">Cake board</option></select></div>
+        <div class="form-group"><label class="form-label">Size</label><input id="pack-size" class="form-input" placeholder="e.g. 10 inch square"></div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Unit</label>
-        <select class="form-select" id="inv-unit">
-          <option>kg</option>
-          <option>g</option>
-          <option>litre</option>
-          <option>pcs</option>
-          <option>box</option>
-        </select>
+      <div class="form-row-2">
+        <div class="form-group"><label class="form-label">Quantity available</label><input id="pack-qty" type="number" min="0" step="1" class="form-input" placeholder="e.g. 5"></div>
+        <div class="form-group" style="display:flex;align-items:flex-end;"><button class="btn btn-primary" onclick="upsertPackagingStock()">Save stock</button></div>
       </div>
+      <div style="font-size:11px;color:var(--text-muted);">During testing, stock counts are stored on this device only.</div>
     </div>
-    <div class="form-row-2">
-      <div class="form-group">
-        <label class="form-label">Quantity *</label>
-        <input type="number" class="form-input" id="inv-qty" placeholder="0" step="0.1" min="0">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Min. threshold</label>
-        <input type="number" class="form-input" id="inv-threshold" placeholder="e.g. 2" step="0.1" min="0">
-      </div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-primary" style="flex:2;" onclick="saveInvItem()">Save Item</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="closeInvModal()">Cancel</button>
-    </div>
+    <div id="pack-stock-list" style="margin-top:12px;"></div>
   </div>
 </div>
-
-<!-- UPDATE QTY MODAL -->
-<div id="inv-qty-modal" style="display:none;position:fixed;inset:0;background:rgba(61,43,31,0.55);z-index:700;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:var(--warm-white);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:340px;">
-    <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:600;color:var(--chocolate);margin-bottom:4px;" id="inv-qty-modal-name"></div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px;" id="inv-qty-modal-current"></div>
-    <div class="form-group">
-      <label class="form-label">New quantity</label>
-      <input type="number" class="form-input" id="inv-qty-new" placeholder="0" step="0.1" min="0" style="font-size:22px;font-weight:600;text-align:center;">
-    </div>
-    <div style="display:flex;gap:8px;">
-      <button class="btn btn-primary" style="flex:2;" onclick="saveQtyUpdate()">Update</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="closeQtyModal()">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- SHOPPING LIST MODAL -->
-<div id="shopping-modal" style="display:none;position:fixed;inset:0;background:rgba(61,43,31,0.55);z-index:700;align-items:flex-end;justify-content:center;">
-  <div style="background:var(--warm-white);border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-width:430px;max-height:85vh;overflow-y:auto;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--chocolate);">🛒 Shopping List</div>
-      <span onclick="closeShoppingModal()" style="font-size:24px;cursor:pointer;color:var(--text-muted);">×</span>
-    </div>
-    <div id="shopping-list-content"></div>
-    <div style="display:flex;gap:8px;margin-top:16px;">
-      <button class="btn btn-primary" style="flex:2;" onclick="copyShoppingList()">📋 Copy list</button>
-      <button class="btn btn-ghost" style="flex:1;" onclick="closeShoppingModal()">Close</button>
-    </div>
-  </div>
-</div>
-
 
 <!-- CALENDAR PROMPT MODAL -->
 <div id="cal-prompt-modal" style="display:none;position:fixed;inset:0;background:rgba(61,43,31,0.55);z-index:850;align-items:center;justify-content:center;padding:24px;">
@@ -801,7 +682,7 @@
   <div class="nav-tab" onclick="switchScreen('finance',this)" style="min-width:60px;"><div class="nav-icon">💰</div><div class="nav-label">Finance</div></div>
   <div class="nav-tab" onclick="switchScreen('analytics',this)" style="min-width:60px;"><div class="nav-icon">📊</div><div class="nav-label">Insights</div></div>
   <div class="nav-tab" onclick="switchScreen('outstanding',this)" id="nav-outstanding" style="min-width:60px;"><div class="nav-icon">⚠️</div><div class="nav-label">Unpaid</div></div>
-  <div class="nav-tab" onclick="switchScreen('inventory',this)" style="min-width:60px;"><div class="nav-icon">📦</div><div class="nav-label">Shop</div></div>
+  <div class="nav-tab" onclick="switchScreen('inventory',this)" style="min-width:60px;"><div class="nav-icon">📦</div><div class="nav-label">Stock</div></div>
 </div>
 
 <script>
@@ -1139,7 +1020,7 @@ function switchScreen(name, tab) {
   if(name==='customers') renderCustomers();
   if(name==='analytics') setTimeout(renderAnalytics, 50);
   if(name==='outstanding') renderOutstanding();
-  if(name==='inventory') renderInventory();
+  if(name==='inventory') renderPackagingStock();
 }
 function goBack() { switchScreen(prevScreen, document.querySelector('.nav-tab.active')); }
 function renderAll() { renderDashboard(); renderOrderList(); }
@@ -1293,7 +1174,9 @@ function viewOrder(id){
     <div class="detail-section" style="margin-top:8px;"><div class="detail-section-title">Other info</div>
       ${o.phone?`<div class="detail-row"><span class="detail-key">Phone</span><span class="detail-val"><a href="tel:${o.phone}" style="color:var(--rose-dark);text-decoration:none;">${o.phone}</a></span></div>`:''}
       ${o.reminder?`<div class="detail-row"><span class="detail-key">Reminder</span><span class="detail-val" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">${o.reminder} <span onclick="event.stopPropagation();addReminderToCalendar(orders.find(x=>x.id==='${o.id}'))" style="font-size:11px;font-weight:600;color:#1A6EA8;cursor:pointer;background:#E8F4FE;padding:4px 12px;border-radius:99px;">📅 Add to Calendar</span></span></div>`:''}
-      ${o.notes?`<div class="detail-row"><span class="detail-key">Notes</span><span class="detail-val">${o.notes}</span></div>`:''}
+      ${unpackOrderNotes(o.notes||'').box?'<div class="detail-row"><span class="detail-key">Cake box</span><span class="detail-val">'+unpackOrderNotes(o.notes).box+'</span></div>':''}
+      ${unpackOrderNotes(o.notes||'').board?'<div class="detail-row"><span class="detail-key">Cake board</span><span class="detail-val">'+unpackOrderNotes(o.notes).board+'</span></div>':''}
+      ${unpackOrderNotes(o.notes||'').notes?'<div class="detail-row"><span class="detail-key">Notes</span><span class="detail-val">'+unpackOrderNotes(o.notes).notes+'</span></div>':''}
     </div>
     <div style="padding:20px;display:flex;gap:8px;flex-direction:column;">
       <button class="btn btn-primary" onclick="editOrder('${o.id}')">Edit order</button>
@@ -1349,12 +1232,88 @@ async function quickStatus(id){
   }
 }
 
+
+// Packaging inventory prototype, independent of the old shopping-reminder data.
+// This is device-only storage; later we can extend the backend with a Packaging tab.
+const PACK_STOCK_KEY='cc_test_packaging_stock';
+function packagingStock() {
+  try {const x=JSON.parse(localStorage.getItem(PACK_STOCK_KEY)||'[]');return Array.isArray(x)?x:[];}
+  catch(e){return [];}
+}
+function savePackagingStock(rows) { localStorage.setItem(PACK_STOCK_KEY,JSON.stringify(rows)); }
+function escapePack(s) { return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function upsertPackagingStock() {
+  const type=document.getElementById('pack-type').value;
+  const size=document.getElementById('pack-size').value.trim();
+  const qty=Number(document.getElementById('pack-qty').value);
+  if(!size||!Number.isInteger(qty)||qty<0||document.getElementById('pack-qty').value===''){showToast('Enter a size and whole-number quantity');return;}
+  const rows=packagingStock();
+  const idx=rows.findIndex(x=>x.type===type&&x.size.toLowerCase()===size.toLowerCase());
+  if(idx<0)rows.push({type,size,qty});else rows[idx].qty=qty;
+  try{savePackagingStock(rows);}catch(e){showToast('Unable to save stock on this device');return;}
+  document.getElementById('pack-size').value='';document.getElementById('pack-qty').value='';
+  renderPackagingStock();updatePackagingOptions();showToast('Packaging stock updated ✓');
+}
+function deletePackagingStock(type,size) {
+  if(!confirm('Remove this stock entry?'))return;
+  savePackagingStock(packagingStock().filter(x=>!(x.type===type&&x.size===size)));
+  renderPackagingStock();updatePackagingOptions();
+}
+function renderPackagingStock() {
+  const el=document.getElementById('pack-stock-list');if(!el)return;
+  el.innerHTML='';
+  const rows=packagingStock().sort((a,b)=>a.type.localeCompare(b.type)||a.size.localeCompare(b.size));
+  if(!rows.length){el.textContent='No box or board sizes recorded yet.';el.style.fontSize='12px';return;}
+  rows.forEach(x=>{
+    const line=document.createElement('div');line.style.cssText='display:flex;align-items:center;gap:8px;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;';
+    const detail=document.createElement('span');detail.textContent=x.type+' · '+x.size+' — '+x.qty+' available';
+    const actions=document.createElement('div');actions.style.cssText='display:flex;gap:4px;';
+    const edit=document.createElement('button');edit.className='btn btn-ghost btn-sm';edit.textContent='Edit';edit.onclick=()=>{document.getElementById('pack-type').value=x.type;document.getElementById('pack-size').value=x.size;document.getElementById('pack-qty').value=x.qty;document.getElementById('pack-qty').focus();};
+    const del=document.createElement('button');del.className='btn btn-ghost btn-sm';del.textContent='Remove';del.onclick=()=>deletePackagingStock(x.type,x.size);
+    actions.append(edit,del);line.append(detail,actions);el.append(line);
+  });
+}
+function updatePackagingOptions() {
+  const rows=packagingStock();
+  for(const [type,id] of [['Box','pack-box-list'],['Board','pack-board-list']]){
+    document.getElementById(id).innerHTML=rows.filter(x=>x.type===type).map(x=>'<option value="'+escapePack(x.size)+'"></option>').join('');
+  }
+  showPackagingAvailability();
+}
+function showPackagingAvailability() {
+  const el=document.getElementById('pack-availability');if(!el)return;
+  const rows=packagingStock(),messages=[];
+  for(const [type,input] of [['Box','f-box-size'],['Board','f-board-size']]){
+    const size=document.getElementById(input).value.trim();
+    if(!size)continue;
+    const item=rows.find(x=>x.type===type&&x.size.toLowerCase()===size.toLowerCase());
+    messages.push(type+': '+(item?item.qty+' available on this device':'not recorded in stock'));
+  }
+  el.textContent=messages.length?messages.join(' · '):'Manage stock in the Stock tab.';
+}
+// Store packaging selection within the existing Notes column for backwards compatibility.
+const PACK_NOTE_PREFIX='[CAKE_CART_PACKAGING]';
+function unpackOrderNotes(note) {
+  const text=String(note||'');const lines=text.split('\n');
+  const i=lines.findIndex(line=>line.startsWith(PACK_NOTE_PREFIX));
+  let box='',board='';
+  if(i>=0){try{const p=JSON.parse(lines[i].slice(PACK_NOTE_PREFIX.length));box=String(p.box||'');board=String(p.board||'');}catch(e){}lines.splice(i,1);}
+  return {notes:lines.join('\n').trim(),box,board};
+}
+function packOrderNotes() {
+  const notes=document.getElementById('f-notes').value.trim();
+  const box=document.getElementById('f-box-size').value.trim();
+  const board=document.getElementById('f-board-size').value.trim();
+  return notes+((box||board)?(notes?'\n':'')+PACK_NOTE_PREFIX+JSON.stringify({box,board}):'');
+}
+
 // ── ADD/EDIT ──
 function newOrder(){
   document.getElementById('edit-order-id').value='';
   document.getElementById('add-title').textContent='New Order';
   document.getElementById('delete-btn').style.display='none';
-  ['f-name','f-phone','f-theme','f-notes'].forEach(id=>document.getElementById(id).value='');
+  ['f-name','f-phone','f-theme','f-notes','f-box-size','f-board-size'].forEach(id=>document.getElementById(id).value='');
+  updatePackagingOptions();
   setReferenceImage('');
   ['f-source','f-type','f-flavour'].forEach(id=>document.getElementById(id).selectedIndex=0);
   document.getElementById('f-delivery').value='Pickup';
@@ -1393,7 +1352,11 @@ function editOrder(id){
   // Show original order date (read-only)
   const _oDate = o.created ? new Date(Number(o.created)) : new Date();
   document.getElementById('f-order-date').value=_oDate.getFullYear()+'-'+String(_oDate.getMonth()+1).padStart(2,'0')+'-'+String(_oDate.getDate()).padStart(2,'0');
-  document.getElementById('f-notes').value=o.notes||'';
+  const packing=unpackOrderNotes(o.notes||'');
+  document.getElementById('f-notes').value=packing.notes;
+  document.getElementById('f-box-size').value=packing.box;
+  document.getElementById('f-board-size').value=packing.board;
+  updatePackagingOptions();
   updateBalance();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-add').classList.add('active');
@@ -1505,7 +1468,7 @@ async function saveOrder(){
     type,flavour:document.getElementById('f-flavour').value,theme:document.getElementById('f-theme').value,referenceImage:document.getElementById('f-reference-image').value,
     total:Number(document.getElementById('f-total').value)||0,paid:Number(document.getElementById('f-paid').value)||0,
     status:document.getElementById('f-status').value,delivery:document.getElementById('f-delivery').value,
-    reminder:document.getElementById('f-reminder').value,notes:document.getElementById('f-notes').value,
+    reminder:document.getElementById('f-reminder').value,notes:packOrderNotes(),
     created:id?(orders.find(o=>o.id===id)?.created||Date.now()):Date.now()
   };
 
@@ -2768,7 +2731,7 @@ function tidyShoppingReminderUi() {
 
 async function init(){
   document.getElementById('header-date').textContent=new Date().toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'});
-  tidyShoppingReminderUi();
+  renderPackagingStock();
   await loadData();
   document.getElementById('loading-overlay').classList.add('hide');
   renderDashboard();
@@ -2782,12 +2745,13 @@ init();
 // ── ANALYTICS ──
 const CHART_COLORS = ['#C47A6E','#8BA888','#D4943A','#6B8AC4','#A07860','#5A7A57','#B8860B','#9370DB'];
 
-let chartIncExp = null, chartSources = null, chartTypes = null;
+let chartIncExp = null, chartSources = null, chartTypes = null, chartMonthlyOrders = null;
 
 function destroyCharts() {
   if(chartIncExp) { chartIncExp.destroy(); chartIncExp=null; }
   if(chartSources) { chartSources.destroy(); chartSources=null; }
   if(chartTypes) { chartTypes.destroy(); chartTypes=null; }
+  if(chartMonthlyOrders) { chartMonthlyOrders.destroy(); chartMonthlyOrders=null; }
 }
 
 function renderAnalytics() {
@@ -2842,6 +2806,22 @@ function renderAnalytics() {
       }
     }
   });
+
+  // Count each non-cancelled order by its scheduled delivery month.
+  const monthlyKeys=[];
+  for(let i=11;i>=0;i--) {
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    monthlyKeys.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));
+  }
+  const monthlyCounts=monthlyKeys.map(m=>orders.filter(o=>o.status!=='Cancelled' && (o.date||'').startsWith(m)).length);
+  const monthlyLabels=monthlyKeys.map(m=>{const [y,mo]=m.split('-');return new Date(+y,+mo-1,1).toLocaleDateString('en-AU',{month:'short',year:'2-digit'});});
+  chartMonthlyOrders=new Chart(document.getElementById('chart-monthly-orders').getContext('2d'),{
+    type:'bar',data:{labels:monthlyLabels,datasets:[{label:'Orders',data:monthlyCounts,backgroundColor:'rgba(90,122,87,0.8)',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      y:{beginAtZero:true,ticks:{precision:0,stepSize:1}},x:{ticks:{font:{size:9},maxRotation:60,minRotation:45}}
+    }}
+  });
+  document.getElementById('monthly-orders-total').textContent=monthlyCounts.reduce((a,b)=>a+b,0)+' orders in the last 12 months · by delivery date · excluding cancelled orders';
 
   // ── Sources donut
   const sourceMap = {};
