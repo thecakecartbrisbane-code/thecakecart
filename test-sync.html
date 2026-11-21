@@ -312,13 +312,13 @@
   <div class="section-head" style="padding-bottom:4px;"><div class="section-title" id="add-title">New Order</div></div>
   <div class="form-wrap">
     <input type="hidden" id="edit-order-id">
-    <div class="form-group"><label class="form-label">Customer name *</label><input type="text" class="form-input" id="f-name" placeholder="e.g. Sarah Kim" list="customer-name-list" oninput="autoFillCustomer()"><datalist id="customer-name-list"></datalist></div>
+    <div class="form-group"><label class="form-label">Customer name *</label><input type="text" class="form-input" id="f-name" placeholder="e.g. Sarah Kim" autocomplete="off" oninput="autoFillCustomer('name')" onfocus="autoFillCustomer('name')"><div id="customer-match-list" style="display:none;background:var(--warm-white);border:1px solid var(--border-strong);border-radius:8px;margin-top:4px;max-height:210px;overflow-y:auto;"></div><datalist id="customer-name-list"></datalist></div>
     <div class="form-row-2">
       <div class="form-group"><label class="form-label">Order date</label><input type="date" class="form-input" id="f-order-date" readonly style="background:var(--cream);color:var(--text-muted);cursor:default;"></div>
       <div style="flex:1;"></div>
     </div>
     <div class="form-row-2">
-      <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="f-phone" placeholder="04xx xxx xxx" autocomplete="tel" oninput="autoFillCustomer()"></div>
+      <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="f-phone" placeholder="04xx xxx xxx" autocomplete="off" inputmode="tel" oninput="autoFillCustomer('phone')" onfocus="autoFillCustomer('phone')"><div id="customer-phone-match-list" style="display:none;background:var(--warm-white);border:1px solid var(--border-strong);border-radius:8px;margin-top:4px;max-height:210px;overflow-y:auto;"></div></div>
       <div class="form-group"><label class="form-label">Source</label><select class="form-select" id="f-source"><option value="">Select…</option><option>Mandir</option><option>Event / Stall</option><option>WhatsApp</option><option>Facebook</option><option>Instagram</option><option>Referral</option><option>Repeat customer</option><option>Walk-in</option><option>Other</option></select></div>
     </div>
     <div class="form-row-2">
@@ -1397,6 +1397,7 @@ function newOrder(){
   ['f-name','f-phone','f-theme','f-notes'].forEach(id=>document.getElementById(id).value='');
   ['f-box-size','f-board-size','f-box-custom','f-board-custom'].forEach(id=>document.getElementById(id).value='');
   updatePackagingOptions();
+  closeCustomerMatches();
   setReferenceImage('');
   ['f-source','f-type','f-flavour'].forEach(id=>document.getElementById(id).selectedIndex=0);
   document.getElementById('f-delivery').value='Pickup';
@@ -1442,6 +1443,7 @@ function editOrder(id){
   setPackagingSelect('f-board-size','f-board-custom',packing.board);
   showPackagingAvailability();
   updateBalance();
+  closeCustomerMatches();
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-add').classList.add('active');
   prevScreen='detail';
@@ -2132,38 +2134,72 @@ _- The Cake Cart_`;
 
 
 // ── AUTO-FILL CUSTOMER ──
-function autoFillCustomer() {
-  const nameVal = (document.getElementById('f-name').value||'').trim().toLowerCase();
-  const phoneVal = (document.getElementById('f-phone').value||'').trim();
-  if(!nameVal && !phoneVal) return;
-
-  // Find matching customer from existing orders
-  const match = orders.find(o=>
-    (nameVal && o.name.toLowerCase().startsWith(nameVal) && nameVal.length>=3) ||
-    (phoneVal && phoneVal.length>=6 && (o.phone||'').replace(/\s/g,'').includes(phoneVal.replace(/\s/g,'')))
-  );
-
-  if(!match) return;
-
-  // Only auto-fill if fields are empty
-  if(document.getElementById('f-name').value.trim()==='' && match.name)
-    document.getElementById('f-name').value = match.name;
-  if(document.getElementById('f-phone').value.trim()==='' && match.phone)
-    document.getElementById('f-phone').value = match.phone;
-  if(!document.getElementById('f-source').value && match.source)
-    document.getElementById('f-source').value = match.source;
-
-  // Update customer datalist
-  updateCustomerDatalist();
+function customerPhoneDigits(phone) {
+  let p=String(phone||'').replace(/\D/g,'');
+  if(p.startsWith('61')&&p.length===11)p='0'+p.slice(2); // Australian +61 mobile
+  return p;
 }
-
+function customerRecordOptions(field,term) {
+  const q=String(term||'').trim().toLowerCase();
+  const qDigits=customerPhoneDigits(term);
+  if(field==='name'&&q.length<2)return [];
+  if(field==='phone'&&qDigits.length<3)return [];
+  // Prefer most recently created customer/order, with each name + number only once.
+  const seen=new Set(),result=[];
+  [...orders].sort((a,b)=>(Number(b.created)||0)-(Number(a.created)||0)).forEach(o=>{
+    const n=String(o.name||''),p=String(o.phone||'');
+    const matches=field==='name'?n.toLowerCase().includes(q):customerPhoneDigits(p).includes(qDigits);
+    if(!matches)return;
+    const key=n.toLowerCase()+'|'+customerPhoneDigits(p);
+    if(seen.has(key))return;
+    seen.add(key);result.push(o);
+  });
+  return result.slice(0,7);
+}
+function autoFillCustomer(field='name') {
+  // Do not replace partially entered names or numbers. Explicit tap chooses a contact.
+  const name=document.getElementById('f-name').value.trim();
+  const phone=document.getElementById('f-phone').value.trim();
+  const showField=field==='phone'?'phone':'name';
+  const matches=customerRecordOptions(showField,showField==='name'?name:phone);
+  renderCustomerMatches(showField,matches);
+}
+function renderCustomerMatches(field,matches) {
+  const id=field==='phone'?'customer-phone-match-list':'customer-match-list';
+  const other=field==='phone'?'customer-match-list':'customer-phone-match-list';
+  const el=document.getElementById(id);
+  document.getElementById(other).style.display='none';
+  el.replaceChildren();
+  if(!matches.length){el.style.display='none';return;}
+  matches.forEach(o=>{
+    const b=document.createElement('button');b.type='button';
+    b.style.cssText='display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--border);background:var(--warm-white);padding:11px 12px;color:var(--chocolate);font-size:13px;cursor:pointer;';
+    const n=document.createElement('strong');n.textContent=o.name||'Customer';n.style.display='block';
+    const p=document.createElement('span');p.textContent=o.phone||'No phone number';p.style.cssText='display:block;color:var(--text-muted);font-size:12px;margin-top:3px;';
+    b.append(n,p);
+    // Prevent keyboard blur before an iOS touch selection takes effect.
+    b.addEventListener('pointerdown',e=>e.preventDefault());
+    b.addEventListener('click',()=>selectExistingCustomer(o.name,o.phone,o.source));
+    el.appendChild(b);
+  });
+  el.style.display='block';
+}
+function selectExistingCustomer(name,phone,source) {
+  document.getElementById('f-name').value=name||'';
+  document.getElementById('f-phone').value=phone||'';
+  if(source&&!document.getElementById('f-source').value)document.getElementById('f-source').value=source;
+  closeCustomerMatches();
+}
+function closeCustomerMatches() {
+  for(const id of ['customer-match-list','customer-phone-match-list']){
+    const el=document.getElementById(id);if(el)el.style.display='none';
+  }
+}
 function updateCustomerDatalist() {
-  const dl = document.getElementById('customer-name-list');
-  const names = [...new Set(orders.map(o=>o.name))].sort();
-  dl.innerHTML = names.map(n=>`<option value="${n}">`).join('');
+  const dl=document.getElementById('customer-name-list');
+  if(!dl)return;
+  dl.innerHTML='';
 }
-
-
 // ═══════════════════════════════════════════════
 // ── INVENTORY MODULE (completely independent) ──
 // ═══════════════════════════════════════════════
